@@ -1,3 +1,5 @@
+import Data.List (foldl')
+
 -- Question 1
 -- Write a function called `repeat'` that takes a value and creates an infinite list with
 -- the value provided as every element of the list.
@@ -93,9 +95,25 @@ zipWith' f xs ys = map (uncurry f) $ zip' xs ys
 -- >>> takeWhile (< 0) [1,2,3]
 -- []
 
+takeWhile' _ [] = []
+takeWhile' filter (x : xs)
+  | not . filter $ x = []
+  | otherwise = x : takeWhile' filter xs
+
+takeWhile'' f = foldr (\x acc -> if f x then x : acc else []) []
+
 -- Question 7 (More difficult)
 -- Write a function that takes in an integer n, calculates the factorial n! and
 -- returns a string in the form of 1*2* ... *n = n! where n! is the actual result.
+
+fact 1 = [1]
+fact n = n : fact (n - 1)
+
+fact' n = expression ++ "=" ++ show factorial
+  where
+    values = fact n
+    factorial = product values
+    expression = foldl (\acc x -> show x ++ if x < n then "*" ++ acc else "") "" values
 
 -- Question 8
 -- Below you have defined some beer prices in bevogBeerPrices and your order list in
@@ -103,19 +121,18 @@ zipWith' f xs ys = map (uncurry f) $ zip' xs ys
 -- the cost including delivery. Assume that the two lists have the beers in the same order.
 
 bevogBeerPrices :: [(String, Double)]
-bevogBeerPrices =
-  [ ("Tak", 6.00),
-    ("Kramah", 7.00),
-    ("Ond", 8.50),
-    ("Baja", 7.50)
-  ]
+bevogBeerPrices = [("Tak", 6.00), ("Kramah", 7.00), ("Ond", 8.50), ("Baja", 7.50)]
 
 orderList :: [(String, Double)]
-orderList =
-  [ ("Tak", 5),
-    ("Kramah", 4),
-    ("Ond", 7)
-  ]
+orderList = [("Tak", 5), ("Kramah", 4), ("Ond", 7)]
 
 deliveryCost :: Double
 deliveryCost = 8.50
+
+orderPrice order = orderCost + deliveryCost
+  where
+    orderCost = sum . zipWith (\p o -> snd p * snd o) bevogBeerPrices $ order
+
+orderSingle order = orderCost + deliveryCost
+  where
+    orderCost = snd . (!! 0) . filter (\x -> fst x == order) $ bevogBeerPrices
