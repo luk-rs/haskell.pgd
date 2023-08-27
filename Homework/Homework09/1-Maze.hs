@@ -1,6 +1,6 @@
 {-
 
-**************************** IMPORTANT ****************************
+\**************************** IMPORTANT ****************************
 
 This week is a two-step homework. First, you have to solve the
 "Maze" challenge, and then the "Forest" challenge. The challenges
@@ -10,7 +10,7 @@ spoilers of the "Forest" one. Make sure to check the solution for
 "Maze" (and only "Maze," I see you 🥸👀) before starting with the
 "Forest" challenge!
 
-*******************************************************************
+\*******************************************************************
 
 Today, you'll build the simplest and most basic game imaginable.
 It'll be a maze game where the player has to write a list of moves, and the game will perform them
@@ -22,15 +22,15 @@ takes a maze and a list of moves and returns a String with the resulting state.
 
 It should look like this:
 
-*Main> solveMaze testMaze []
+\*Main> solveMaze testMaze []
 "You're still inside the maze. Choose a path, brave adventurer: GoLeft, GoRight, or GoForward."
-*Main> solveMaze testMaze [GoLeft]
+\*Main> solveMaze testMaze [GoLeft]
 "You've hit a wall!"
-*Main> solveMaze testMaze [GoForward]
+\*Main> solveMaze testMaze [GoForward]
 "You're still inside the maze. Choose a path, brave adventurer: GoLeft, GoRight, or GoForward."
-*Main> solveMaze testMaze [GoForward, GoRight]
+\*Main> solveMaze testMaze [GoForward, GoRight]
 "You've hit a wall!"
-*Main> solveMaze testMaze [GoForward, GoLeft]
+\*Main> solveMaze testMaze [GoForward, GoLeft]
 "YOU'VE FOUND THE EXIT!!"
 
 How are you going to achieve this? You can try it on your own, but here you have a
@@ -53,3 +53,63 @@ still need to make another choice.
 
 6. Adapt adapt "solveMaze" function to use "showCurrentChoice" and play with your new game using GHCi! :D
 -}
+
+data Move = GoLeft | GoRight | GoForward
+
+data Maze = Exit | Wall | Passage Maze Maze Maze deriving (Show)
+
+testMaze :: Maze
+testMaze =
+  Passage
+    Wall
+    ( Passage
+        (Passage Wall Wall Wall)
+        ( Passage
+            Wall
+            ( Passage
+                Wall
+                Wall
+                ( Passage
+                    Wall
+                    ( Passage
+                        ( Passage
+                            Wall
+                            (Passage Wall Exit Wall)
+                            Wall
+                        )
+                        Wall
+                        Wall
+                    )
+                    Wall
+                )
+            )
+            Wall
+        )
+        ( Passage
+            Wall
+            (Passage Wall Wall Wall)
+            Wall
+        )
+    )
+    Wall
+
+move :: Maze -> Move -> Maze
+move Exit _ = Exit
+move Wall _ = Wall
+move (Passage x y z) m = case m of
+  GoForward -> y
+  GoLeft -> x
+  GoRight -> z
+
+solve :: Maze -> [Move] -> Maze
+solve Exit _ = Exit
+solve Wall _ = Wall
+solve maze [] = maze
+solve maze (m : mxs) = solve newMaze mxs
+  where
+    newMaze = move maze m
+
+showCurrentChoice :: Maze -> String
+showCurrentChoice Exit = "Reached the end, WHOOHOO!!"
+showCurrentChoice Wall = "You've hit the wall :( BUMMER..."
+showCurrentChoice _ = "You're still lost in your attempt to find the exit"

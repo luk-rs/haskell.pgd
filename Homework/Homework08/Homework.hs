@@ -29,9 +29,9 @@ regionSamples = [("Bordeaux", "France"), ("Tuscany", "Italy"), ("Rioja", "Spain"
 -- Additionally, use this data type for the examples: red wine with 14.5% alcohol, white wine with 13% alcohol
 -- and Rose wine with 12% alcohol.
 
-data Kind = Red Float | White Float | Rose Float
+data Kind a = Red a | White a | Rose a
 
-wineSamples :: [Kind]
+wineSamples :: [Kind Float]
 wineSamples = [Red 14.5, White 13, Rose 12]
 
 -- Question 4
@@ -43,7 +43,7 @@ wineSamples = [Red 14.5, White 13, Rose 12]
 data Label = Label
   { grapes :: [Grape],
     region :: Region,
-    kind :: Kind
+    kind :: Kind Float
   }
 
 -- Larrosa Rose is a rose wine from the region Rioja. It is made from the Garnacha grape and

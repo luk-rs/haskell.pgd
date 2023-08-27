@@ -1,10 +1,10 @@
 {-
 
-**************************** IMPORTANT ****************************
+\**************************** IMPORTANT ****************************
 
 Solve this homework after completing and checking the "Maze" one.
 
-*******************************************************************
+\*******************************************************************
 
 We're going to build on top of the "Maze" challenge by coding a similar
 but a bit more complicated game.
@@ -31,14 +31,66 @@ pair will have to do.
 
 Using GHCi, like the "Maze" game, this game should look like this:
 
-*Main> solveForest testForest []
+\*Main> solveForest testForest []
 "You have 10 stamina, and you're still inside the Forest. Choose a path, brave adventurer: GoLeft, GoRight, or GoForward."
-*Main> solveForest testForest [GoForward ]
+\*Main> solveForest testForest [GoForward ]
 "You have 7 stamina, and you're still inside the Forest. Choose a path, brave adventurer: GoLeft, GoRight, or GoForward."
-*Main> solveForest testForest [GoForward, GoForward]
+\*Main> solveForest testForest [GoForward, GoForward]
 "You have 4 stamina, and you're still inside the Forest. Choose a path, brave adventurer: GoLeft, GoRight, or GoForward."
-*Main> solveForest testForest [GoForward, GoForward, GoLeft  ]
+\*Main> solveForest testForest [GoForward, GoForward, GoLeft  ]
 "You ran out of stamina and died -.-!"
-*Main> solveForest testForest [GoForward, GoLeft , GoRight]
+\*Main> solveForest testForest [GoForward, GoLeft , GoRight]
 "YOU'VE FOUND THE EXIT!!"
 -}
+data Move = GoLeft | GoRight | GoForward
+
+data Forest
+  = Exit
+  | Trail
+      { work :: Int,
+        right :: Forest,
+        forward :: Forest,
+        left :: Forest
+      }
+  deriving (Show)
+
+testForest :: Forest
+testForest =
+  Trail
+    2
+    Exit
+    ( Trail
+        4
+        ( Trail
+            6
+            Exit
+            Exit
+            Exit
+        )
+        Exit
+        Exit
+    )
+    Exit
+
+type Player = (Int, Forest)
+
+moveInForest :: Player -> Move -> Player
+moveInForest (stamina, Exit) _ = (stamina, Exit)
+moveInForest (stamina, Trail {work, right, forward, left}) move =
+  let remaining = stamina - work
+   in if remaining < 0
+        then (remaining, Trail work right forward left)
+        else case move of
+          GoLeft -> (remaining, left)
+          GoForward -> (remaining, forward)
+          GoRight -> (remaining, right)
+
+solveForest :: Forest -> [Move] -> Forest
+solveForest Exit _ = Exit
+solveForest forest moves = snd . foldl moveInForest player $ moves
+  where
+    player = (10, forest) :: Player
+
+showForest :: Forest -> String
+showForest Exit = "Got Out Dude!! Djiz"
+showForest _ = "Got stuck inside the forsest I'm just too tired."
