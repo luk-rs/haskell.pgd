@@ -1,7 +1,6 @@
 import Data.List
 import System.CPUTime (getCPUTime)
-import System.Directory (doesFileExist, listDirectory)
-import Text.XHtml (thead)
+import System.Directory (doesFileExist, getCurrentDirectory, listDirectory)
 
 {-
 We imported some functions that you'll need to complete the homework.
@@ -20,7 +19,12 @@ and prints it to the terminal inside a string message.
 (hidden files are not included)
 -}
 
--- listFiles :: IO ()
+listFiles :: String -> IO ()
+listFiles directory = do
+  directoryPath <- if directory == "." then getCurrentDirectory else return directory
+  files <- listDirectory directory
+  putStrLn $ "There are '" ++ show (length files) ++ "' files in '" ++ directoryPath ++ "'"
+  mapM_ putStrLn files
 
 {-
 -- Question 2 --
@@ -29,8 +33,14 @@ to a file called msg.txt, and after that, it reads the text from the msg.txt
 file and prints it back. Use the writeFile and readFile functions.
 -}
 
--- createMsg :: IO ()
-
+createMsg :: IO ()
+createMsg = do
+  putStrLn "what do you want to record?"
+  record <- getLine
+  let file = "msg.txt"
+  writeFile file record
+  content <- readFile file
+  putStrLn $ "The content of'" ++ file ++ "' is \n" ++ content
 
 {-
 -- Context for Questions 3 and 4 --
@@ -48,21 +58,21 @@ prime number below our limit. Do it step by step, starting with question 3.
 
 primes1 :: Integer -> [Integer]
 primes1 m = sieve [2 .. m]
- where
-  sieve [] = []
-  sieve (p : xs) = p : sieve [x | x <- xs, x `mod` p > 0]
+  where
+    sieve [] = []
+    sieve (p : xs) = p : sieve [x | x <- xs, x `mod` p > 0]
 
 primes2 :: Integer -> [Integer]
 primes2 m = sieve [2 .. m]
- where
-  sieve (x : xs) = x : sieve (xs \\ [x, x + x .. m])
-  sieve [] = []
+  where
+    sieve (x : xs) = x : sieve (xs \\ [x, x + x .. m])
+    sieve [] = []
 
 primes3 :: Integer -> [Integer]
 primes3 m = turner [2 .. m]
- where
-  turner [] = []
-  turner (p : xs) = p : turner [x | x <- xs, x < p * p || rem x p /= 0]
+  where
+    turner [] = []
+    turner (p : xs) = p : turner [x | x <- xs, x < p * p || rem x p /= 0]
 
 {-
 -- Question 3 --
@@ -71,8 +81,17 @@ Use the getCPUTime :: IO Integer function to get the CPU time before and after t
 The CPU time here is given in picoseconds (which is 1/1000000000000th of a second).
 -}
 
--- timeIO :: IO a -> IO ()
+picoseconds :: Float
+picoseconds = 1000000000000
 
+timeIO :: IO a -> IO ()
+timeIO ioAction = do
+  start <- getCPUTime
+  _ <- ioAction
+  end <- getCPUTime
+  let spent = end - start
+  let seconds = fromInteger spent / picoseconds
+  putStrLn $ "took '" ++ show seconds ++ "' seconds to execute"
 
 {-
 -- Question 4 --
@@ -81,7 +100,15 @@ and compares the time all three algorithms take to produce the largest prime bef
 limit. Print the number and time to the standard output.
 -}
 
--- benchmark :: IO ()
+benchmark :: IO ()
+benchmark = do
+  input <- getLine
+  let limit = read input
+  benchmark' primes1 limit
+  -- benchmark' primes2 limit -- very slow
+  benchmark' primes3 limit
+  where
+    benchmark' f n = timeIO . print . last $ f n
 
 {-
  -- Question 5 -- EXTRA CREDITS -- (In case the previous ones were too easy)
@@ -103,3 +130,28 @@ Below you can see an example output of how such a structure looks like:
 HINT: You can use the function doesFileExist, which takes in a FilePath and returns
 True if the argument file exists and is not a directory, and False otherwise.
 -}
+
+data Elem = Elem FilePath Integer Bool deriving (Show)
+
+printSubtree :: FilePath -> IO ()
+printSubtree path = do
+  unsorted <- listDirectory path >>= inspect 0 path
+  printElems unsorted
+
+printElems :: [Elem] -> IO ()
+printElems [] = return ()
+printElems (Elem name depth last : xs) = do
+  mapM_ (\_ -> putStr "  ") $ drop 1 [0 .. depth]
+  if last then putStr "└──" else putStr "├──"
+  print name
+  printElems xs
+
+inspect :: Integer -> FilePath -> [FilePath] -> IO [Elem]
+inspect _ _ [] = return []
+inspect depth acc (x : xs) = do
+  let subpath = acc ++ "/" ++ x
+  isFile <- doesFileExist subpath
+  let isLast = null xs
+  subtree <- if isFile then return [] else listDirectory subpath >>= inspect (depth + 1) subpath
+  rest <- inspect depth acc xs
+  return $ Elem x depth isLast : subtree ++ rest
