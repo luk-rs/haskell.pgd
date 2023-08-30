@@ -136,15 +136,18 @@ data Elem = Elem FilePath Integer Bool deriving (Show)
 printSubtree :: FilePath -> IO ()
 printSubtree path = do
   unsorted <- listDirectory path >>= inspect 0 path
-  printElems unsorted
+  printSubtreeElems unsorted
 
-printElems :: [Elem] -> IO ()
-printElems [] = return ()
-printElems (Elem name depth last : xs) = do
-  mapM_ (\_ -> putStr "  ") $ drop 1 [0 .. depth]
-  if last then putStr "└──" else putStr "├──"
+printSubtreeElems :: [Elem] -> IO ()
+printSubtreeElems [] = return ()
+printSubtreeElems (Elem name depth last : xs) = do
+  printTabs
+  printGlyph
   print name
-  printElems xs
+  printSubtreeElems xs
+  where
+    printTabs = mapM_ (\_ -> putStr "  ") $ drop 1 [0 .. depth]
+    printGlyph = if last then putStr "└──" else putStr "├──"
 
 inspect :: Integer -> FilePath -> [FilePath] -> IO [Elem]
 inspect _ _ [] = return []
